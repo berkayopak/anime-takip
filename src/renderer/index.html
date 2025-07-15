@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' https:; connect-src 'self' https:; img-src 'self' https: data:; font-src 'self' https:;">
+    <title>Anime Takip - TurkAnime Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <i class="fas fa-play-circle"></i>
+            <span>Anime Takip</span>
+        </div>
+        <div class="nav-actions">
+            <button class="btn btn-primary" id="addAnimeBtn">
+                <i class="fas fa-plus"></i> Anime Ekle
+            </button>
+            <button class="btn btn-secondary" id="refreshBtn">
+                <i class="fas fa-sync-alt"></i> Yenile
+            </button>
+            <button class="btn btn-warning" id="updateCategoriesBtn">
+                <i class="fas fa-tags"></i> Kategorileri Güncelle
+            </button>
+            <button class="btn btn-info" id="settingsBtn">
+                <i class="fas fa-cog"></i> Ayarlar
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Stats Section -->
+        <section class="stats-section">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-tv"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-number" id="totalAnimes">0</div>
+                    <div class="stat-label">Toplam Anime</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-eye"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-number" id="watchingAnimes">0</div>
+                    <div class="stat-label">İzleniyor</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-number" id="completedAnimes">0</div>
+                    <div class="stat-label">Tamamlandı</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-play"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-number" id="totalEpisodes">0</div>
+                    <div class="stat-label">İzlenen Bölüm</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Filter Section -->
+        <section class="filter-section">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Anime ara...">
+            </div>
+            <div class="filter-tabs">
+                <button class="tab-btn active" data-filter="all">Tümü</button>
+                <button class="tab-btn" data-filter="watching">İzleniyor</button>
+                <button class="tab-btn" data-filter="completed">Tamamlandı</button>
+                <button class="tab-btn" data-filter="paused">Durduruldu</button>
+                <button class="tab-btn" data-filter="dropped">Bırakıldı</button>
+            </div>
+        </section>
+
+        <!-- Anime Grid -->
+        <section class="anime-grid" id="animeGrid">
+            <!-- Anime cards will be dynamically inserted here -->
+        </section>
+
+        <!-- Empty State -->
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <div class="empty-icon">
+                <i class="fas fa-tv"></i>
+            </div>
+            <h3>Henüz anime eklemediniz</h3>
+            <p>İzlediğiniz animeleri takip etmek için anime ekleyin</p>
+            <button class="btn btn-primary" onclick="showAddAnimeDialog()">
+                <i class="fas fa-plus"></i> İlk Animeni Ekle
+            </button>
+        </div>
+    </main>
+
+    <!-- Add Anime Modal -->
+    <div class="modal" id="addAnimeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-plus"></i> Anime Ekle</h2>
+                <button class="close-btn" onclick="closeAddAnimeDialog()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="search-section">
+                    <div class="input-group">
+                        <input type="text" id="animeSearchInput" placeholder="Anime adını girin...">
+                        <button class="btn btn-primary" id="searchAnimeBtn">
+                            <i class="fas fa-search"></i> Ara
+                        </button>
+                    </div>
+                </div>
+                <div class="search-results" id="searchResults">
+                    <!-- Search results will be displayed here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-cog"></i> Ayarlar</h2>
+                <button class="close-btn" onclick="closeSettingsDialog()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="setting-group">
+                    <label>
+                        <i class="fas fa-clock"></i>
+                        Kontrol Aralığı (dakika)
+                    </label>
+                    <input type="number" id="checkInterval" min="5" max="1440" value="30">
+                </div>
+                <div class="setting-group">
+                    <label>
+                        <i class="fas fa-sync-alt"></i>
+                        Otomatik Yenileme
+                    </label>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="autoRefresh" checked>
+                        <span class="slider"></span>
+                    </div>
+                </div>
+                <div class="setting-group">
+                    <label>
+                        <i class="fas fa-bell"></i>
+                        Bildirimler
+                    </label>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="notifications" checked>
+                        <span class="slider"></span>
+                    </div>
+                </div>
+                <div class="setting-actions">
+                    <button class="btn btn-info" id="testNotificationBtn" onclick="testNotification()">
+                        <i class="fas fa-bell"></i> Bildirimi Test Et
+                    </button>
+                    <button class="btn btn-success" onclick="saveSettings()">
+                        <i class="fas fa-save"></i> Kaydet
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Episode Selection Modal -->
+    <div class="modal" id="episodeSelectionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-play"></i> Bölüm Seçimi</h2>
+                <button class="close-btn" onclick="closeEpisodeSelectionDialog()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="episode-info">
+                    <h3 id="episodeDialogTitle">Anime Adı</h3>
+                    <p>Hangi bölümde kaldığınızı seçin:</p>
+                </div>
+                <div class="episode-input-group">
+                    <label>
+                        <i class="fas fa-play"></i>
+                        Mevcut Bölüm
+                    </label>
+                    <input type="number" id="currentEpisodeSelection" min="0" step="1" value="0" placeholder="Bölüm numarası girin...">
+                </div>
+                <div class="episode-actions">
+                    <button class="btn btn-secondary" id="cancelAddAnimeBtn">
+                        <i class="fas fa-times"></i> İptal
+                    </button>
+                    <button class="btn btn-success" id="confirmAddAnimeBtn">
+                        <i class="fas fa-check"></i> Ekle
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Anime Update Modal -->
+    <div class="modal" id="animeModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-edit"></i> Anime Güncelle</h2>
+                <button class="close-btn" onclick="closeAnimeDialog()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="anime-info">
+                    <h3 id="animeTitle"></h3>
+                    
+                    <div class="update-section">
+                        <label>Mevcut Bölüm:</label>
+                        <div class="episode-input-group">
+                            <button class="btn btn-sm" onclick="decrementEpisode()">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <input type="number" id="currentEpisodeInput" min="0">
+                            <button class="btn btn-sm" onclick="incrementEpisode()">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="update-section">
+                        <label>Durum:</label>
+                        <select id="animeStatusSelect" class="status-select">
+                            <option value="watching">İzleniyor</option>
+                            <option value="completed">Tamamlandı</option>
+                            <option value="paused">Durduruldu</option>
+                            <option value="dropped">Bırakıldı</option>
+                        </select>
+                    </div>
+                    
+                    <div class="anime-actions">
+                        <button class="btn btn-success" onclick="updateAnime()">
+                            <i class="fas fa-save"></i> Güncelle
+                        </button>
+                        <button class="btn btn-secondary" onclick="closeAnimeDialog()">
+                            İptal
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Yükleniyor...</p>
+        </div>
+    </div>
+
+    <!-- Custom Confirm Dialog -->
+    <div class="modal" id="confirmDialog">
+        <div class="modal-content confirm-dialog">
+            <div class="modal-header">
+                <h2><i class="fas fa-exclamation-triangle"></i> Onay</h2>
+            </div>
+            <div class="modal-body">
+                <p id="confirmMessage">Bu işlemi gerçekleştirmek istediğinizden emin misiniz?</p>
+                <div class="confirm-actions">
+                    <button class="btn btn-danger" id="confirmYes">
+                        <i class="fas fa-check"></i> Evet
+                    </button>
+                    <button class="btn btn-secondary" id="confirmNo">
+                        <i class="fas fa-times"></i> Hayır
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Status Indicator -->
+    <div id="statusIndicator" class="status-indicator">
+        <div class="status-content">
+            <i class="fas fa-spinner fa-spin status-icon"></i>
+            <span class="status-text">Başlatılıyor...</span>
+        </div>
+    </div>
+
+    <!-- Logger script removed -->
+    <script src="renderer.js"></script>
+</body>
+</html>

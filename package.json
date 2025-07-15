@@ -1,0 +1,68 @@
+{
+  "name": "anime-takip",
+  "version": "1.0.0",
+  "description": "TurkAnime.co için geliştirilmiş modern anime takip uygulaması",
+  "main": "main.js",
+  "scripts": {
+    "start": "cross-env NODE_ENV=development electron .",
+    "start:prod": "cross-env NODE_ENV=production electron .",
+    "dev": "cross-env NODE_ENV=development electron .",
+    "build": "electron-builder",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build:linux": "electron-builder --linux",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder --publish=never"
+  },
+  "keywords": [
+    "anime",
+    "tracker",
+    "turkanime",
+    "electron",
+    "desktop"
+  ],
+  "author": "Anime Takip Team",
+  "license": "MIT",
+  "homepage": ".",
+  "dependencies": {
+    "cheerio": "^1.1.0",
+    "electron": "^37.2.1",
+    "node-notifier": "^10.0.1",
+    "puppeteer": "^24.13.0",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "electron-builder": "^26.0.12",
+    "electron-reload": "^2.0.0-alpha.1"
+  },
+  "build": {
+    "appId": "com.animetakip.app",
+    "productName": "Anime Takip",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "src/**/*",
+      "assets/**/*",
+      "node_modules/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.png"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icon.png"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "assets/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}
