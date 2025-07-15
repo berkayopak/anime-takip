@@ -71,7 +71,17 @@ function createWindow() {
   });
 
   // Handle window closed
-  mainWindow.on('closed', () => {
+  mainWindow.on('closed', async () => {
+    // Clean up animeTracker before nulling the window reference
+    if (animeTracker) {
+      try {
+        await animeTracker.cleanup();
+        console.log('AnimeTracker cleaned up on window close');
+        animeTracker = null;
+      } catch (error) {
+        console.error('Error cleaning up AnimeTracker:', error);
+      }
+    }
     mainWindow = null;
   });
 
@@ -94,24 +104,44 @@ if (process.platform === 'win32') {
   
   // Set app icon for Windows
   app.whenReady().then(() => {
-    const iconPath = path.join(__dirname, 'assets', 'icon.ico');
-    const appIcon = nativeImage.createFromPath(iconPath);
-    app.setAppIcon(appIcon);
+    // app.setAppIcon is not a valid function in Electron
+    // Icon is already set using setAppUserModelId and window.setIcon
+    console.log('App icon for Windows is set via AppUserModelId');
   });
 }
 
 // App event listeners
 app.whenReady().then(createWindow);
 
-app.on('window-all-closed', () => {
+app.on('window-all-closed', async () => {
+  // Clean up animeTracker before quitting
+  if (animeTracker) {
+    try {
+      await animeTracker.cleanup();
+      console.log('AnimeTracker cleaned up on app quit');
+      animeTracker = null;
+    } catch (error) {
+      console.error('Error cleaning up AnimeTracker:', error);
+    }
+  }
+  
   if (process.platform !== 'darwin') {
     app.quit();
   }
 });
 
-app.on('activate', () => {
+app.on('activate', async () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
+  } else if (mainWindow && !animeTracker) {
+    // Reinitialize animeTracker if window exists but tracker was cleaned up
+    animeTracker = new AnimeTracker(mainWindow);
+    try {
+      await animeTracker.initialize();
+      console.log('AnimeTracker reinitialized on app activate');
+    } catch (error) {
+      console.error('Failed to reinitialize AnimeTracker on app activate:', error);
+    }
   }
 });
 
