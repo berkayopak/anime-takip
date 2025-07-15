@@ -30,6 +30,7 @@ function createWindow() {
     },
     icon: appIcon,
     titleBarStyle: 'default',
+    autoHideMenuBar: true,
     show: false
   });
 
@@ -51,10 +52,10 @@ function createWindow() {
     mainWindow.maximize(); // Tam ekran açılım
     mainWindow.show();
     
-    // Open DevTools only in development
-    if (process.env.NODE_ENV === 'development') {
-      mainWindow.webContents.openDevTools();
-    }
+    // DevTools'u manuel açmak için Ctrl+Shift+I kullanabilirsin
+    // if (process.env.NODE_ENV === 'development') {
+    //   mainWindow.webContents.openDevTools();
+    // }
     
     // Initialize anime tracker with window reference
     animeTracker = new AnimeTracker(mainWindow);
@@ -83,65 +84,8 @@ function createWindow() {
     }
   });
 
-  // Create menu
-  createMenu();
-}
-
-function createMenu() {
-  const template = [
-    {
-      label: 'Dosya',
-      submenu: [
-        {
-          label: 'Yeni Anime Ekle',
-          accelerator: 'CmdOrCtrl+N',
-          click: () => {
-            mainWindow.webContents.send('show-add-anime-dialog');
-          }
-        },
-        { type: 'separator' },
-        {
-          label: 'Çıkış',
-          accelerator: process.platform === 'darwin' ? 'Cmd+Q' : 'Ctrl+Q',
-          click: () => {
-            app.quit();
-          }
-        }
-      ]
-    },
-    {
-      label: 'Görünüm',
-      submenu: [
-        { role: 'reload', label: 'Yenile' },
-        { role: 'forceReload', label: 'Zorla Yenile' },
-        { 
-          role: 'toggleDevTools', 
-          label: 'Geliştirici Araçları',
-          accelerator: 'F12'
-        },
-        { type: 'separator' },
-        { role: 'resetZoom', label: 'Zoom Sıfırla' },
-        { role: 'zoomIn', label: 'Yakınlaştır' },
-        { role: 'zoomOut', label: 'Uzaklaştır' },
-        { type: 'separator' },
-        { role: 'togglefullscreen', label: 'Tam Ekran' }
-      ]
-    },
-    {
-      label: 'Yardım',
-      submenu: [
-        {
-          label: 'Hakkında',
-          click: () => {
-            mainWindow.webContents.send('show-about-dialog');
-          }
-        }
-      ]
-    }
-  ];
-
-  const menu = Menu.buildFromTemplate(template);
-  Menu.setApplicationMenu(menu);
+  // Remove menu bar completely
+  Menu.setApplicationMenu(null);
 }
 
 // Set App User Model ID for Windows taskbar grouping and icon
