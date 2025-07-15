@@ -249,8 +249,8 @@ class AnimeApp {
     return `
       <div class="anime-card ${hasNewEpisode ? 'has-new-episode' : ''}" data-id="${anime.id}">
         <div class="anime-image">
-          <img src="${anime.image || 'assets/placeholder.jpg'}" alt="${anime.title}" 
-               onerror="this.src='assets/placeholder.jpg'">
+          <img src="${anime.image || 'assets/placeholder.png'}" alt="${anime.title}" 
+               onerror="this.src='assets/placeholder.png'">
           <div class="anime-status ${statusClass}">${statusText}</div>
           ${newEpisodesBadge}
         </div>

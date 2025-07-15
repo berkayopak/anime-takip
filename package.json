@@ -1,5 +1,5 @@
 {
-  "name": "anime-takip",
+  "name": "anime-takip-app",
   "version": "1.0.0",
   "description": "TurkAnime.co için geliştirilmiş modern anime takip uygulaması",
   "main": "main.js",
@@ -26,19 +26,19 @@
   "homepage": ".",
   "dependencies": {
     "cheerio": "^1.1.0",
-    "electron": "^37.2.1",
     "node-notifier": "^10.0.1",
     "puppeteer": "^24.13.0",
     "sqlite3": "^5.1.7"
   },
   "devDependencies": {
     "cross-env": "^7.0.3",
+    "electron": "^37.2.1",
     "electron-builder": "^26.0.12",
     "electron-reload": "^2.0.0-alpha.1"
   },
   "build": {
-    "appId": "com.animetakip.app",
-    "productName": "Anime Takip",
+    "appId": "com.animetakip.app.prod",
+    "productName": "Anime Takip Uygulaması",
     "directories": {
       "output": "dist"
     },
@@ -48,9 +48,14 @@
       "assets/**/*",
       "node_modules/**/*"
     ],
+    "asarUnpack": [
+      "node_modules/sqlite3/**/*"
+    ],
     "win": {
       "target": "nsis",
-      "icon": "assets/icon.png"
+      "icon": "assets/icon.ico",
+      "signAndEditExecutable": false,
+      "verifyUpdateCodeSignature": false
     },
     "mac": {
       "target": "dmg",
@@ -62,7 +67,11 @@
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "deleteAppDataOnUninstall": false,
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true,
+      "menuCategory": "Entertainment"
     }
   }
 }

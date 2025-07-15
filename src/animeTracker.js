@@ -25,17 +25,14 @@ class AnimeTracker {
       await this.loadSettings();
       await this.initializeBrowser();
       
-      this.isInitialized = true; // Mark as initialized
-      
-      // Only start auto refresh if enabled in settings
-      // AUTO-REFRESH IS NOW HANDLED BY FRONTEND FOR BETTER CONTROL
-      // if (this.settings.autoRefresh) {
-      //   this.startAutoRefresh();
-      // }
-      
-      // Anime tracker initialized successfully
+      this.isInitialized = true; // Mark as initialized only after successful completion
+      console.log('Anime tracker initialized successfully');
     } catch (error) {
+      this.isInitialized = false; // Explicitly set to false on error
       console.error('Failed to initialize anime tracker:', error);
+      
+      // Don't throw error, allow app to continue with basic functionality
+      // The IPC handlers will handle re-initialization when needed
     }
   }
 
@@ -1225,6 +1222,11 @@ class AnimeTracker {
   // Update categories from TurkAnime API
   async updateCategoriesFromAPI() {
     try {
+      // Check if database is initialized
+      if (!this.db || !this.db.db) {
+        throw new Error('Database not initialized');
+      }
+      
       // Logger message removed
       const categories = await this.getAnimeCategories();
       
@@ -1237,7 +1239,7 @@ class AnimeTracker {
         return { success: false, error: 'No categories received from API' };
       }
     } catch (error) {
-      console.error("Error occurred");
+      console.error("Error updating categories:", error.message);
       return { success: false, error: error.message };
     }
   }

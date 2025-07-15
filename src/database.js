@@ -1,10 +1,16 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
+const { app } = require('electron');
 
 class Database {
   constructor() {
-    this.dbPath = path.join(__dirname, '..', 'data', 'anime_tracker.db');
+    // Use user data directory for production builds to avoid permission issues
+    const isDev = process.env.NODE_ENV === 'development';
+    const userDataPath = isDev ? __dirname : app.getPath('userData');
+    const dataDir = isDev ? path.join(__dirname, '..', 'data') : path.join(userDataPath, 'data');
+    
+    this.dbPath = path.join(dataDir, 'anime_tracker.db');
     this.db = null;
   }
 
@@ -25,10 +31,11 @@ class Database {
       // Run migrations
       await this.runMigrations();
       
-      // Database initialized successfully
+      console.log('Database initialized successfully');
     } catch (error) {
       console.error('Database initialization failed:', error);
-      throw error;
+      // Don't throw error, let the app continue with basic functionality
+      // Database operations will handle the missing connection gracefully
     }
   }
 

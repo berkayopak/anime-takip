@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, Notification, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, Notification, Menu, nativeImage } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const AnimeTracker = require('./src/animeTracker');
@@ -10,6 +10,13 @@ let animeTracker;
 
 
 function createWindow() {
+  // Create icon as NativeImage for better Windows compatibility
+  const iconPath = process.platform === 'win32' ? 
+    path.join(__dirname, 'assets', 'icon.ico') : 
+    path.join(__dirname, 'assets', 'icon.png');
+  
+  const appIcon = nativeImage.createFromPath(iconPath);
+  
   // Create the browser window
   mainWindow = new BrowserWindow({
     width: 1200,
@@ -21,7 +28,7 @@ function createWindow() {
       contextIsolation: false,
       enableRemoteModule: true
     },
-    icon: path.join(__dirname, 'assets', 'icon.png'),
+    icon: appIcon,
     titleBarStyle: 'default',
     show: false
   });
@@ -30,7 +37,17 @@ function createWindow() {
   mainWindow.loadFile('src/renderer/index.html');
 
   // Show window when ready
-  mainWindow.once('ready-to-show', () => {
+  mainWindow.once('ready-to-show', async () => {
+    // Set icon using NativeImage BEFORE showing the window
+    const iconPath = process.platform === 'win32' ? 
+      path.join(__dirname, 'assets', 'icon.ico') : 
+      path.join(__dirname, 'assets', 'icon.png');
+    const appIcon = nativeImage.createFromPath(iconPath);
+    
+    if (process.platform === 'win32') {
+      mainWindow.setIcon(appIcon);
+    }
+    
     mainWindow.maximize(); // Tam ekran açılım
     mainWindow.show();
     
@@ -41,12 +58,29 @@ function createWindow() {
     
     // Initialize anime tracker with window reference
     animeTracker = new AnimeTracker(mainWindow);
-    animeTracker.initialize();
+    
+    try {
+      await animeTracker.initialize(); // Wait for initialization to complete
+      console.log('Application initialized successfully');
+    } catch (error) {
+      console.error('Failed to initialize application:', error);
+      // Don't show error dialog immediately, just log the error
+      // App should still be usable with fallback initialization
+    }
   });
 
   // Handle window closed
   mainWindow.on('closed', () => {
     mainWindow = null;
+  });
+
+  // Handle window focus - refresh icon for taskbar
+  mainWindow.on('focus', () => {
+    if (process.platform === 'win32') {
+      const iconPath = path.join(__dirname, 'assets', 'icon.ico');
+      const appIcon = nativeImage.createFromPath(iconPath);
+      mainWindow.setIcon(appIcon);
+    }
   });
 
   // Create menu
@@ -110,6 +144,18 @@ function createMenu() {
   Menu.setApplicationMenu(menu);
 }
 
+// Set App User Model ID for Windows taskbar grouping and icon
+if (process.platform === 'win32') {
+  app.setAppUserModelId('com.animetakip.app.prod');
+  
+  // Set app icon for Windows
+  app.whenReady().then(() => {
+    const iconPath = path.join(__dirname, 'assets', 'icon.ico');
+    const appIcon = nativeImage.createFromPath(iconPath);
+    app.setAppIcon(appIcon);
+  });
+}
+
 // App event listeners
 app.whenReady().then(createWindow);
 
@@ -130,6 +176,12 @@ ipcMain.handle('get-anime-list', async () => {
   if (!animeTracker) {
     return [];
   }
+  
+  // Ensure database is initialized
+  if (!animeTracker.isInitialized) {
+    await animeTracker.initialize();
+  }
+  
   return await animeTracker.getAnimeList();
 });
 
@@ -137,6 +189,12 @@ ipcMain.handle('add-anime', async (event, animeData) => {
   if (!animeTracker) {
     throw new Error('Anime tracker not initialized');
   }
+  
+  // Ensure database is initialized
+  if (!animeTracker.isInitialized) {
+    await animeTracker.initialize();
+  }
+  
   return await animeTracker.addAnime(animeData);
 });
 
@@ -144,6 +202,12 @@ ipcMain.handle('update-episode', async (event, animeId, episode) => {
   if (!animeTracker) {
     throw new Error('Anime tracker not initialized');
   }
+  
+  // Ensure database is initialized
+  if (!animeTracker.isInitialized) {
+    await animeTracker.initialize();
+  }
+  
   return await animeTracker.updateEpisode(animeId, episode);
 });
 
@@ -151,6 +215,12 @@ ipcMain.handle('update-anime-status', async (event, animeId, status) => {
   if (!animeTracker) {
     throw new Error('Anime tracker not initialized');
   }
+  
+  // Ensure database is initialized
+  if (!animeTracker.isInitialized) {
+    await animeTracker.initialize();
+  }
+  
   return await animeTracker.updateAnimeStatus(animeId, status);
 });
 
@@ -158,6 +228,12 @@ ipcMain.handle('delete-anime', async (event, animeId) => {
   if (!animeTracker) {
     throw new Error('Anime tracker not initialized');
   }
+  
+  // Ensure database is initialized
+  if (!animeTracker.isInitialized) {
+    await animeTracker.initialize();
+  }
+  
   return await animeTracker.deleteAnime(animeId);
 });
 
@@ -165,6 +241,12 @@ ipcMain.handle('check-for-updates', async () => {
   if (!animeTracker) {
     return [];
   }
+  
+  // Ensure database is initialized
+  if (!animeTracker.isInitialized) {
+    await animeTracker.initialize();
+  }
+  
   return await animeTracker.checkForUpdates();
 });
 
@@ -172,6 +254,12 @@ ipcMain.handle('check-single-anime-update', async (event, animeId) => {
   if (!animeTracker) {
     return [];
   }
+  
+  // Ensure database is initialized
+  if (!animeTracker.isInitialized) {
+    await animeTracker.initialize();
+  }
+  
   return await animeTracker.checkSingleAnimeUpdate(animeId);
 });
 
@@ -179,6 +267,12 @@ ipcMain.handle('search-anime', async (event, query) => {
   if (!animeTracker) {
     throw new Error('Anime tracker not initialized');
   }
+  
+  // Ensure database is initialized
+  if (!animeTracker.isInitialized) {
+    await animeTracker.initialize();
+  }
+  
   return await animeTracker.searchAnime(query);
 });
 
@@ -187,15 +281,9 @@ ipcMain.handle('get-settings', async () => {
     return { checkInterval: 30, notifications: true, autoRefresh: true };
   }
   
-  // Wait for initialization to complete
-  let retries = 0;
-  while (!animeTracker.isInitialized && retries < 50) { // 5 seconds max wait
-    await new Promise(resolve => setTimeout(resolve, 100));
-    retries++;
-  }
-  
+  // Ensure database is initialized
   if (!animeTracker.isInitialized) {
-    return { checkInterval: 30, notifications: true, autoRefresh: true };
+    await animeTracker.initialize();
   }
   
   return await animeTracker.getSettings();
@@ -205,6 +293,12 @@ ipcMain.handle('save-settings', async (event, settings) => {
   if (!animeTracker) {
     throw new Error('Anime tracker not initialized');
   }
+  
+  // Ensure database is initialized
+  if (!animeTracker.isInitialized) {
+    await animeTracker.initialize();
+  }
+  
   return await animeTracker.saveSettings(settings);
 });
 
@@ -219,19 +313,38 @@ ipcMain.handle('test-notification', async () => {
 
 // Update categories from API handler
 ipcMain.handle('update-categories', async () => {
-  if (!animeTracker) {
-    throw new Error('Anime tracker not initialized');
+  try {
+    if (!animeTracker) {
+      throw new Error('Anime tracker not initialized');
+    }
+    
+    // Ensure database is initialized before calling the function
+    if (!animeTracker.isInitialized) {
+      await animeTracker.initialize();
+    }
+    
+    // Give the database a moment to fully initialize
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    return await animeTracker.updateCategoriesFromAPI();
+  } catch (error) {
+    console.error('Categories update failed:', error);
+    return { success: false, error: error.message };
   }
-  return await animeTracker.updateCategoriesFromAPI();
 });
 
 // Handle notifications
 ipcMain.on('show-notification', (event, title, body) => {
   if (Notification.isSupported()) {
+    const iconPath = process.platform === 'win32' ? 
+      path.join(__dirname, 'assets', 'icon.ico') : 
+      path.join(__dirname, 'assets', 'icon.png');
+    const appIcon = nativeImage.createFromPath(iconPath);
+    
     new Notification({
       title: title,
       body: body,
-      icon: path.join(__dirname, 'assets', 'icon.png')
+      icon: appIcon
     }).show();
   }
 });
