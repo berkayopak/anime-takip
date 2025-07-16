@@ -913,10 +913,38 @@ class AnimeApp {
     statusIndicator.classList.remove('show');
   }
 
-  openNewEpisode(animeId, episodeNumber) {
+  async openNewEpisode(animeId, episodeNumber) {
     const anime = this.animes.find(a => a.id === animeId);
     if (!anime) return;
 
+    try {
+      // Show loading status
+      this.showStatus('Episode URL hazırlanıyor...');
+      
+      // Get the correct episode URL from backend
+      const episodeUrl = await ipcRenderer.invoke('get-episode-url', anime.url, episodeNumber, anime.totalEpisodes);
+      
+      if (episodeUrl) {
+        // Open the correct episode URL
+        require('electron').shell.openExternal(episodeUrl);
+        
+        // Auto-update current episode to the new episode
+        this.updateEpisodeNumber(animeId, episodeNumber);
+        
+        this.hideStatus();
+        this.showToast(`${episodeNumber}. bölüm açılıyor...`, 'success');
+      } else {
+        // Fallback to old URL construction method
+        this.openEpisodeWithFallback(anime, episodeNumber);
+      }
+    } catch (error) {
+      console.error('Error getting episode URL:', error);
+      // Fallback to old URL construction method
+      this.openEpisodeWithFallback(anime, episodeNumber);
+    }
+  }
+
+  openEpisodeWithFallback(anime, episodeNumber) {
     // Extract anime ID from URL to construct episode URL
     let animeUrlId = null;
     if (anime.url.includes('/anime/')) {
@@ -932,7 +960,7 @@ class AnimeApp {
       // Clean up anime ID
       animeUrlId = animeUrlId.split('?')[0].replace(/\/$/, '');
       
-      // Construct episode URL
+      // Construct episode URL (fallback method)
       const episodeUrl = `https://www.turkanime.co/video/${animeUrlId}-${episodeNumber}-bolum`;
       
       // Open episode URL
@@ -940,7 +968,11 @@ class AnimeApp {
       
       // Auto-update current episode to the new episode
       this.updateEpisodeNumber(animeId, episodeNumber);
+      
+      this.hideStatus();
+      this.showToast(`${episodeNumber}. bölüm açılıyor... (fallback)`, 'info');
     } else {
+      this.hideStatus();
       this.showToast('Episode URL oluşturulamadı', 'error');
     }
   }

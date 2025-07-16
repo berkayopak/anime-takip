@@ -411,7 +411,8 @@ class AnimeTracker {
               this.mainWindow.webContents.send('anime-updated', {
                 type: 'new-episode',
                 animeId: addedAnime.id,
-                episodeNumber: updates[0].newEpisode
+                episodeNumber: updates[0].newEpisode,
+                episodeUrl: updates[0].episodeUrl || null
               });
             } else {
               console.error('MainWindow or webContents not available for IPC event');
@@ -635,17 +636,19 @@ class AnimeTracker {
           // Looking for next episode
           
           // Method 1: Direct URL check
-          const hasNewEpisode = await this.checkEpisodeExists(anime.url, nextEpisode);
+          const episodeResult = await this.checkEpisodeExists(anime.url, nextEpisode, anime.totalEpisodes);
           
-          if (hasNewEpisode) {
+          if (episodeResult.found) {
             // Found new episode
+            console.log(`✅ Found episode via direct URL: ${episodeResult.url}`);
             
             // Update has_new_episode flag in database
             await this.db.updateNewEpisodeStatus(anime.id, true);
             
             updates.push({
               anime: anime,
-              newEpisode: nextEpisode
+              newEpisode: nextEpisode,
+              episodeUrl: episodeResult.url // Include the actual URL
             });
           } else {
             // Episode not found
@@ -658,13 +661,28 @@ class AnimeTracker {
             // Only trust the fallback if it's reasonable and within expected range
             if (latestEpisode > anime.currentEpisode && latestEpisode <= (anime.totalEpisodes || 100)) {
               // Found newer episodes via page scan
+              console.log(`✅ Fallback found newer episode ${latestEpisode} for ${anime.title}`);
+              
+              // Generate the correct URL for the found episode
+              let animeId = anime.url.includes('/anime/') ? anime.url.split('/anime/')[1] : anime.url.split('/').pop();
+              animeId = animeId.split('?')[0].replace(/\/$/, '');
+              
+              let episodeUrl;
+              if (anime.totalEpisodes && latestEpisode === anime.totalEpisodes) {
+                // Final episode - try -final first
+                episodeUrl = `https://www.turkanime.co/video/${animeId}-${latestEpisode}-bolum-final`;
+              } else {
+                // Regular episode
+                episodeUrl = `https://www.turkanime.co/video/${animeId}-${latestEpisode}-bolum`;
+              }
               
               // Update has_new_episode flag in database
               await this.db.updateNewEpisodeStatus(anime.id, true);
               
               updates.push({
                 anime: anime,
-                newEpisode: latestEpisode
+                newEpisode: latestEpisode,
+                episodeUrl: episodeUrl
               });
             } else if (latestEpisode > 0) {
               // Fallback found episode but it seems unrealistic - ignoring
@@ -738,20 +756,57 @@ class AnimeTracker {
       const nextEpisode = anime.currentEpisode + 1;
       // Logger message removed
       
-      const hasNewEpisode = await this.checkEpisodeExists(anime.url, nextEpisode);
+      const episodeResult = await this.checkEpisodeExists(anime.url, nextEpisode, anime.totalEpisodes);
       
-      if (hasNewEpisode) {
-        // Logger message removed
+      if (episodeResult.found) {
+        console.log(`✅ Found episode via direct URL: ${episodeResult.url}`);
         
         // Update has_new_episode flag in database
         await this.db.setNewEpisodeFlag(anime.id, true);
         
         return [{
           anime: anime,
-          newEpisode: nextEpisode
+          newEpisode: nextEpisode,
+          episodeUrl: episodeResult.url // Include the actual URL
         }];
       } else {
-        // Logger message removed
+        // Direct URL check failed, try fallback method
+        console.log(`🔄 Direct URL check failed for ${anime.title}, trying fallback method...`);
+        
+        const latestEpisode = await this.getLatestEpisode(anime.url);
+        console.log(`🔍 Fallback found latest episode: ${latestEpisode} for ${anime.title}`);
+        
+        // Only trust the fallback if it's reasonable and within expected range
+        if (latestEpisode > anime.currentEpisode && latestEpisode <= (anime.totalEpisodes || 100)) {
+          console.log(`✅ Fallback episode ${latestEpisode} is valid for ${anime.title}`);
+          
+          // Generate the correct URL for the found episode
+          let animeId = anime.url.includes('/anime/') ? anime.url.split('/anime/')[1] : anime.url.split('/').pop();
+          animeId = animeId.split('?')[0].replace(/\/$/, '');
+          
+          let episodeUrl;
+          if (anime.totalEpisodes && latestEpisode === anime.totalEpisodes) {
+            // Final episode - try -final first
+            episodeUrl = `https://www.turkanime.co/video/${animeId}-${latestEpisode}-bolum-final`;
+          } else {
+            // Regular episode
+            episodeUrl = `https://www.turkanime.co/video/${animeId}-${latestEpisode}-bolum`;
+          }
+          
+          // Update has_new_episode flag in database
+          await this.db.setNewEpisodeFlag(anime.id, true);
+          
+          return [{
+            anime: anime,
+            newEpisode: latestEpisode,
+            episodeUrl: episodeUrl
+          }];
+        } else if (latestEpisode > 0) {
+          console.log(`❌ Fallback episode ${latestEpisode} seems unrealistic for ${anime.title}, ignoring`);
+        } else {
+          console.log(`❌ No episodes found via fallback for ${anime.title}`);
+        }
+        
         return [];
       }
       
@@ -762,7 +817,7 @@ class AnimeTracker {
   }
 
   // Check if specific episode exists using TurkAnime URL pattern
-  async checkEpisodeExists(animeUrl, episodeNumber) {
+  async checkEpisodeExists(animeUrl, episodeNumber, totalEpisodes = null) {
     if (!this.browser) {
       await this.initializeBrowser();
     }
@@ -788,87 +843,107 @@ class AnimeTracker {
       }
       
       if (!animeId) {
-        console.error("Error occurred");
+        console.log(`❌ Could not extract anime ID from URL: ${animeUrl}`);
         return false;
       }
       
-      // Logger message removed
+      // Determine if this might be the final episode
+      const isFinalEpisode = totalEpisodes && episodeNumber === totalEpisodes;
       
-      // Use TurkAnime's standard URL pattern
-      const episodeUrl = `https://www.turkanime.co/video/${animeId}-${episodeNumber}-bolum`;
-      // Logger message removed
+      // Create URL variants to try
+      const urlsToTry = [];
+      
+      if (isFinalEpisode) {
+        // For final episodes, try -final version first
+        urlsToTry.push(`https://www.turkanime.co/video/${animeId}-${episodeNumber}-bolum-final`);
+        urlsToTry.push(`https://www.turkanime.co/video/${animeId}-${episodeNumber}-bolum`);
+      } else {
+        // For regular episodes, try normal version
+        urlsToTry.push(`https://www.turkanime.co/video/${animeId}-${episodeNumber}-bolum`);
+      }
+      
+      console.log(`🔍 Checking episode ${episodeNumber} for anime: ${animeId}`);
+      console.log(`📝 Total episodes known: ${totalEpisodes || 'unknown'}`);
+      console.log(`🎯 Is final episode: ${isFinalEpisode}`);
       
       const page = await this.browser.newPage();
       await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
       
-      try {
-        // Try to navigate to episode page
-        const response = await page.goto(episodeUrl, { 
-          waitUntil: 'domcontentloaded', 
-          timeout: 8000 
-        });
+      // Try each URL variant
+      for (let urlIndex = 0; urlIndex < urlsToTry.length; urlIndex++) {
+        const episodeUrl = urlsToTry[urlIndex];
+        console.log(`🌐 Trying URL ${urlIndex + 1}/${urlsToTry.length}: ${episodeUrl}`);
         
-        const status = response.status();
-        // Logger message removed
-        
-        // Check if page exists (not 404 or 500)
-        if (status === 200) {
-          // Check page content to verify it's actually an episode page
-          const isEpisodePage = await page.evaluate(() => {
-            // Look for video player or episode content indicators
-            const videoIndicators = [
-              'video', 
-              '.video-player', 
-              '.player', 
-              '[id*="player"]',
-              '.video-container',
-              'iframe[src*="player"]',
-              '.episode-content',
-              '.video-embed'
-            ];
-            
-            const hasVideoIndicator = videoIndicators.some(selector => 
-              document.querySelector(selector) !== null
-            );
-            
-            // Also check if the page content suggests it's an episode
-            const pageText = document.body.textContent.toLowerCase();
-            const hasEpisodeContent = pageText.includes('bölüm') || 
-                                     pageText.includes('episode') ||
-                                     pageText.includes('video') ||
-                                     pageText.includes('izle');
-            
-            // Check if it's not an error page
-            const isNotErrorPage = !pageText.includes('bulunamadı') &&
-                                  !pageText.includes('404') &&
-                                  !pageText.includes('hata');
-            
-            return hasVideoIndicator || (hasEpisodeContent && isNotErrorPage);
+        try {
+          // Try to navigate to episode page
+          const response = await page.goto(episodeUrl, { 
+            waitUntil: 'domcontentloaded', 
+            timeout: 8000 
           });
           
-          await page.close();
+          const status = response.status();
+          console.log(`📡 Response status: ${status}`);
           
-          if (isEpisodePage) {
-            // Logger message removed
-            return true;
+          // Check if page exists (not 404 or 500)
+          if (status === 200) {
+            // Check page content to verify it's actually an episode page
+            const isEpisodePage = await page.evaluate(() => {
+              // Look for video player or episode content indicators
+              const videoIndicators = [
+                'video', 
+                '.video-player', 
+                '.player', 
+                '[id*="player"]',
+                '.video-container',
+                'iframe[src*="player"]',
+                '.episode-content',
+                '.video-embed'
+              ];
+              
+              const hasVideoIndicator = videoIndicators.some(selector => 
+                document.querySelector(selector) !== null
+              );
+              
+              // Also check if the page content suggests it's an episode
+              const pageText = document.body.textContent.toLowerCase();
+              const hasEpisodeContent = pageText.includes('bölüm') || 
+                                       pageText.includes('episode') ||
+                                       pageText.includes('video') ||
+                                       pageText.includes('izle');
+              
+              // Check if it's not an error page
+              const isNotErrorPage = !pageText.includes('bulunamadı') &&
+                                    !pageText.includes('404') &&
+                                    !pageText.includes('hata');
+              
+              return hasVideoIndicator || (hasEpisodeContent && isNotErrorPage);
+            });
+            
+            if (isEpisodePage) {
+              console.log(`✅ Found valid episode page!`);
+              await page.close();
+              return { found: true, url: episodeUrl }; // Return the actual URL found
+            } else {
+              console.log(`❌ Page exists but doesn't seem to be a valid episode page`);
+            }
+          } else if (status === 404) {
+            console.log(`❌ Episode not found (404)`);
           } else {
-            // Logger message removed
+            console.log(`❌ Unexpected status code: ${status}`);
           }
-        } else {
-          // Logger message removed
+          
+        } catch (navError) {
+          console.log(`❌ Navigation error: ${navError.message}`);
         }
-        
-      } catch (navError) {
-        // Logger message removed
-        await page.close();
       }
       
-      // Logger message removed
-      return false;
+      await page.close();
+      console.log(`❌ No valid episode found after trying all URL variants`);
+      return { found: false, url: null };
       
     } catch (error) {
-      console.error("Error occurred");
-      return false;
+      console.error(`❌ Error in checkEpisodeExists: ${error.message}`);
+      return { found: false, url: null };
     }
   }
 

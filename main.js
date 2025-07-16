@@ -237,6 +237,20 @@ ipcMain.handle('check-single-anime-update', async (event, animeId) => {
   return await animeTracker.checkSingleAnimeUpdate(animeId);
 });
 
+ipcMain.handle('get-episode-url', async (event, animeUrl, episodeNumber, totalEpisodes) => {
+  if (!animeTracker) {
+    return null;
+  }
+  
+  // Ensure database is initialized
+  if (!animeTracker.isInitialized) {
+    await animeTracker.initialize();
+  }
+  
+  const result = await animeTracker.checkEpisodeExists(animeUrl, episodeNumber, totalEpisodes);
+  return result.found ? result.url : null;
+});
+
 ipcMain.handle('search-anime', async (event, query) => {
   if (!animeTracker) {
     throw new Error('Anime tracker not initialized');
