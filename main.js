@@ -53,9 +53,9 @@ function createWindow() {
     mainWindow.show();
     
     // DevTools'u manuel açmak için Ctrl+Shift+I kullanabilirsin
-    // if (process.env.NODE_ENV === 'development') {
-    //   mainWindow.webContents.openDevTools();
-    // }
+    if (process.env.NODE_ENV === 'development') {
+      mainWindow.webContents.openDevTools();
+    }
     
     // Initialize anime tracker with window reference
     animeTracker = new AnimeTracker(mainWindow);

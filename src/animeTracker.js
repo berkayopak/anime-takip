@@ -471,22 +471,26 @@ class AnimeTracker {
         let isUnknownTotal = false; // Flag to track if we found "?" format
         
         // Method 1: Look for "Bölüm Sayısı" in all table structures
-        
-        // Search in all possible table structures
         const allTableElements = document.querySelectorAll('table, .anime-info, .info-list, .details');
+        
         for (let table of allTableElements) {
           const rows = table.querySelectorAll('tr, .info-row, .detail-row');
           
           for (let row of rows) {
             const rowText = row.textContent.toLowerCase();
+            
             if (rowText.includes('bölüm sayısı') || rowText.includes('episode')) {
-              
               // Try different cell structures
               const cells = row.querySelectorAll('td, .info-label, .info-value, .detail-label, .detail-value, span, div');
               
               for (let i = 0; i < cells.length; i++) {
                 const cell = cells[i];
                 const cellText = cell.textContent.trim();
+                
+                // Skip cells that contain "bölüm sayısı" (these are labels, not values)
+                if (cellText.toLowerCase().includes('bölüm sayısı') || cellText === ':') {
+                  continue;
+                }
                 
                 // Look for patterns like "24", "24/24", "24 / 24", "24 / ?", "Episode 24"
                 const patterns = [
@@ -503,8 +507,8 @@ class AnimeTracker {
                     const num1 = parseInt(match[1]);
                     const num2 = match[2] ? parseInt(match[2]) : null;
                     
-                    // Handle "X / ?" format - if second part is ?, set totalEpisodes to 0 (unknown)
-                    if (cellText.includes('/') && cellText.includes('?')) {
+                    // Handle "X / ?" format - check if the second part is ?
+                    if (pattern.source.includes('\\?')) {
                       totalEpisodes = 0; // Unknown total episodes
                       isUnknownTotal = true; // Set flag to prevent fallback
                       break;
@@ -540,7 +544,6 @@ class AnimeTracker {
           
           for (let line of lines) {
             if (line.includes('bölüm sayısı') || line.includes('episode')) {
-              
               const patterns = [
                 /(\d+)\s*\/\s*(\d+)/,  // "24/24" format
                 /(\d+)\s*\/\s*\?/,     // "24/?" format - unknown total
@@ -589,6 +592,7 @@ class AnimeTracker {
             totalEpisodes = parseInt(episodeMatch[1]);
           }
         }
+        
         return {
           totalEpisodes,
           status: 'ongoing', // Default status
@@ -597,6 +601,7 @@ class AnimeTracker {
       });
 
       await page.close();
+      
       return details;
     } catch (error) {
       console.error('Failed to get anime details:', error);
