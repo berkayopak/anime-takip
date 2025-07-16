@@ -1144,3 +1144,11 @@ input:checked + .slider:before {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* Clear Search Link Styles */
+.clear-search-link {
+  color: var(--primary-color);
+  cursor: pointer;
+  text-decoration: underline;
+  display: inline-block; /* This ensures underline only covers text, not spaces */
+}

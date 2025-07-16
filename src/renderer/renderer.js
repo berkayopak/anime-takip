@@ -5,8 +5,10 @@ class AnimeApp {
     this.animes = [];
     this.filteredAnimes = [];
     this.currentFilter = 'watching'; // Default to 'watching' instead of 'all'
+    this.previousFilter = 'watching'; // Store previous filter before search
     this.currentAnimeId = null;
     this.searchTimeout = null;
+    this.currentSearchQuery = ''; // Track current search query
     this.autoRefreshInterval = null; // For managing auto refresh interval
     
     this.init();
@@ -217,8 +219,25 @@ class AnimeApp {
     if (this.filteredAnimes.length === 0) {
       grid.style.display = 'none';
       
-      // Show custom empty state for specific filters
-      if (this.currentFilter === 'completed') {
+      // Check if we're showing empty results due to search
+      if (this.currentSearchQuery) {
+        emptyState.innerHTML = `
+          <div class="empty-icon">
+            <i class="fas fa-search"></i>
+          </div>
+          <h3>Aradığınız anime listenizde bulunamadı</h3>
+          <p>"<strong>${this.currentSearchQuery}</strong>" için sonuç bulunamadı</p>
+          <p style="margin-top: 0.5rem; color: var(--text-muted); font-size: 0.9rem;">
+            <span onclick="app.clearSearch()" class="clear-search-link">
+              Aramayı temizle
+            </span>
+            veya anime listenize ekleyin
+          </p>
+          <button class="btn btn-primary" onclick="showAddAnimeDialog('${this.currentSearchQuery}')" style="margin-top: 1rem;">
+            <i class="fas fa-plus"></i> Anime Listeme Ekle
+          </button>
+        `;
+      } else if (this.currentFilter === 'completed') {
         emptyState.innerHTML = `
           <div class="empty-icon">
             <i class="fas fa-check-circle"></i>
@@ -348,6 +367,19 @@ class AnimeApp {
   }
 
   handleSearch(query) {
+    this.currentSearchQuery = query.trim(); // Store current search query
+    
+    // If there's a search query, automatically switch to "all" filter to search across all animes
+    if (this.currentSearchQuery && this.currentFilter !== 'all') {
+      // Store current filter before switching to "all"
+      this.previousFilter = this.currentFilter;
+      
+      // Manually set filter without calling setFilter to avoid clearing search
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelector(`[data-filter="all"]`).classList.add('active');
+      this.currentFilter = 'all';
+    }
+    
     clearTimeout(this.searchTimeout);
     this.searchTimeout = setTimeout(() => {
       this.applyFilter(query);
@@ -360,9 +392,32 @@ class AnimeApp {
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
     
+    // If manually switching to a different filter (not due to search), clear search
+    const searchInput = document.getElementById('searchInput');
+    const hasActiveSearch = searchInput && searchInput.value.trim();
+    
+    // Always clear search when manually switching filters
+    if (hasActiveSearch) {
+      this.currentSearchQuery = '';
+      searchInput.value = '';
+    }
+    
+    // Update previous filter when manually changing (not from search clear)
+    if (!hasActiveSearch || filter !== 'all') {
+      this.previousFilter = filter;
+    }
+    
     this.currentFilter = filter;
-    this.applyFilter();
+    this.applyFilter(''); // Always apply with empty search query
     this.renderAnimes();
+  }
+
+  clearSearch() {
+    this.currentSearchQuery = '';
+    document.getElementById('searchInput').value = '';
+    
+    // Return to previous filter when search is cleared
+    this.setFilter(this.previousFilter);
   }
 
   applyFilter(searchQuery = '') {
@@ -480,6 +535,12 @@ class AnimeApp {
       await ipcRenderer.invoke('add-anime', animeData);
       
       this.showToast('Anime başarıyla eklendi', 'success');
+      
+      // Clear search queries after successful addition
+      this.currentSearchQuery = '';
+      document.getElementById('searchInput').value = '';
+      document.getElementById('animeSearchInput').value = '';
+      
       this.closeAddAnimeDialog();
       this.closeEpisodeSelectionDialog();
       
@@ -667,10 +728,18 @@ class AnimeApp {
     require('electron').shell.openExternal(url);
   }
 
-  showAddAnimeDialog() {
-    document.getElementById('animeSearchInput').value = '';
+  showAddAnimeDialog(prefilledQuery = '') {
+    document.getElementById('animeSearchInput').value = prefilledQuery;
     document.getElementById('searchResults').innerHTML = '';
     document.getElementById('addAnimeModal').classList.add('show');
+    
+    // If there's a prefilled query, automatically search for it
+    if (prefilledQuery.trim()) {
+      // Use a slight delay to ensure modal is fully shown
+      setTimeout(() => {
+        this.searchAnime();
+      }, 100);
+    }
   }
 
   closeAddAnimeDialog() {
@@ -793,6 +862,7 @@ class AnimeApp {
   async performRefresh(showNoUpdatesToast = true, isAutoRefresh = false) {
     // Show loading state in refresh button (for both manual and auto refresh for better UX)
     const refreshBtn = document.getElementById('refreshBtn');
+    const searchInput = document.getElementById('searchInput');
     let originalHTML = '';
     
     // Always show visual feedback, but with different text for auto refresh
@@ -800,6 +870,12 @@ class AnimeApp {
 
     refreshBtn.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Yenileniyor...';
     refreshBtn.disabled = true;
+    
+    // Disable search input during refresh to prevent conflicts
+    if (searchInput) {
+      searchInput.disabled = true;
+      searchInput.placeholder = 'Yenileme sırasında arama devre dışı...';
+    }
 
     try {
       const statusMessage = isAutoRefresh ? 'Otomatik kontrol yapılıyor...' : 'Yeni bölümler kontrol ediliyor...';
@@ -832,9 +908,14 @@ class AnimeApp {
       this.showToast(errorMessage, 'error');
       this.showStatus('❌ Yenileme hatası', 'error', 3000);
     } finally {
-      // Always restore button state
+      // Always restore button and search input state
       refreshBtn.innerHTML = originalHTML;
       refreshBtn.disabled = false;
+      
+      if (searchInput) {
+        searchInput.disabled = false;
+        searchInput.placeholder = 'Anime ara...';
+      }
     }
   }
 
@@ -1122,7 +1203,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Global functions for onclick handlers
-window.showAddAnimeDialog = () => window.app.showAddAnimeDialog();
+window.showAddAnimeDialog = (prefilledQuery = '') => window.app.showAddAnimeDialog(prefilledQuery);
 window.closeAddAnimeDialog = () => window.app.closeAddAnimeDialog();
 window.closeSettingsDialog = () => window.app.closeSettingsDialog();
 window.closeAnimeDialog = () => window.app.closeAnimeDialog();
@@ -1133,3 +1214,4 @@ window.testNotification = () => window.app.testNotification();
 window.updateAnime = () => window.app.updateAnime();
 window.incrementEpisode = () => window.app.incrementEpisode();
 window.decrementEpisode = () => window.app.decrementEpisode();
+window.clearSearch = () => window.app.clearSearch();
