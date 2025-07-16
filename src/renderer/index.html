@@ -33,70 +33,73 @@
 
     <!-- Main Content -->
     <main class="main-content">
-        <!-- Stats Section -->
-        <section class="stats-section">
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-tv"></i>
+        <!-- Sticky Header Container -->
+        <div class="sticky-header">
+            <!-- Stats Section -->
+            <section class="stats-section">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-tv"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-number" id="totalAnimes">0</div>
+                        <div class="stat-label">Toplam Anime</div>
+                    </div>
                 </div>
-                <div class="stat-info">
-                    <div class="stat-number" id="totalAnimes">0</div>
-                    <div class="stat-label">Toplam Anime</div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-eye"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-number" id="watchingAnimes">0</div>
+                        <div class="stat-label">İzleniyor</div>
+                    </div>
                 </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-eye"></i>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-calendar-plus"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-number" id="plannedAnimes">0</div>
+                        <div class="stat-label">Planlandı</div>
+                    </div>
                 </div>
-                <div class="stat-info">
-                    <div class="stat-number" id="watchingAnimes">0</div>
-                    <div class="stat-label">İzleniyor</div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-number" id="completedAnimes">0</div>
+                        <div class="stat-label">Tamamlandı</div>
+                    </div>
                 </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-calendar-plus"></i>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-play"></i>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-number" id="totalEpisodes">0</div>
+                        <div class="stat-label">İzlenen Bölüm</div>
+                    </div>
                 </div>
-                <div class="stat-info">
-                    <div class="stat-number" id="plannedAnimes">0</div>
-                    <div class="stat-label">Planlandı</div>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-check-circle"></i>
-                </div>
-                <div class="stat-info">
-                    <div class="stat-number" id="completedAnimes">0</div>
-                    <div class="stat-label">Tamamlandı</div>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-play"></i>
-                </div>
-                <div class="stat-info">
-                    <div class="stat-number" id="totalEpisodes">0</div>
-                    <div class="stat-label">İzlenen Bölüm</div>
-                </div>
-            </div>
-        </section>
+            </section>
 
-        <!-- Filter Section -->
-        <section class="filter-section">
-            <div class="search-box">
-                <i class="fas fa-search"></i>
-                <input type="text" id="searchInput" placeholder="Anime ara...">
-            </div>
-            <div class="filter-tabs">
-                <button class="tab-btn active" data-filter="all">Tümü</button>
-                <button class="tab-btn" data-filter="watching">İzleniyor</button>
-                <button class="tab-btn" data-filter="planned">Planlandı</button>
-                <button class="tab-btn" data-filter="completed">Tamamlandı</button>
-                <button class="tab-btn" data-filter="paused">Durduruldu</button>
-                <button class="tab-btn" data-filter="dropped">Bırakıldı</button>
-            </div>
-        </section>
+            <!-- Filter Section -->
+            <section class="filter-section">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Anime ara...">
+                </div>
+                <div class="filter-tabs">
+                    <button class="tab-btn active" data-filter="all">Tümü</button>
+                    <button class="tab-btn" data-filter="watching">İzleniyor</button>
+                    <button class="tab-btn" data-filter="planned">Planlandı</button>
+                    <button class="tab-btn" data-filter="completed">Tamamlandı</button>
+                    <button class="tab-btn" data-filter="paused">Durduruldu</button>
+                    <button class="tab-btn" data-filter="dropped">Bırakıldı</button>
+                </div>
+            </section>
+        </div>
 
         <!-- Anime Grid -->
         <section class="anime-grid" id="animeGrid">

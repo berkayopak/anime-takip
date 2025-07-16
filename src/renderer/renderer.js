@@ -16,6 +16,9 @@ class AnimeApp {
     try {
       this.showStatus('Uygulama başlatılıyor...', 'loading');
       
+      // Set dynamic navbar height for sticky positioning
+      this.setStickyHeaderPosition();
+      
       this.bindEvents();
       // Set default filter to 'watching' instead of 'all'
       this.setFilter('watching');
@@ -45,6 +48,41 @@ class AnimeApp {
         refreshBtn.disabled = false;
       }
     }
+  }
+
+  setStickyHeaderPosition() {
+    // Wait for DOM to be fully rendered
+    setTimeout(() => {
+      const navbar = document.querySelector('.navbar');
+      if (navbar) {
+        // Get computed style for more accurate height
+        const navbarStyles = window.getComputedStyle(navbar);
+        const navbarHeight = navbar.offsetHeight + 
+                            parseInt(navbarStyles.borderTopWidth) + 
+                            parseInt(navbarStyles.borderBottomWidth);
+        
+        // Set CSS custom property for sticky positioning
+        document.documentElement.style.setProperty('--navbar-height', `${navbarHeight}px`);
+        console.log(`Navbar height set to: ${navbarHeight}px`);
+      }
+    }, 100);
+    
+    // Recalculate on window resize with debouncing
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        const navbar = document.querySelector('.navbar');
+        if (navbar) {
+          const navbarStyles = window.getComputedStyle(navbar);
+          const navbarHeight = navbar.offsetHeight + 
+                              parseInt(navbarStyles.borderTopWidth) + 
+                              parseInt(navbarStyles.borderBottomWidth);
+          document.documentElement.style.setProperty('--navbar-height', `${navbarHeight}px`);
+          console.log(`Navbar height updated to: ${navbarHeight}px`);
+        }
+      }, 250);
+    });
   }
 
   bindEvents() {

@@ -26,6 +26,8 @@
   --border-radius: 8px;
   --border-radius-lg: 12px;
   --transition: all 0.3s ease;
+  
+  --navbar-height: 73px; /* Default value, will be overridden by JavaScript */
 }
 
 /* Reset & Base */
@@ -169,12 +171,27 @@ body {
   margin: 0 auto;
 }
 
+/* Sticky Header Container */
+.sticky-header {
+  position: sticky;
+  top: calc(var(--navbar-height) - 1px); /* Overlap by 1px to cover gap */
+  background: var(--bg-primary);
+  z-index: 95; /* Higher than anime cards and animations */
+  padding: 1rem 2rem 1rem 2rem; /* Match main content padding */
+  margin: -2rem -2rem 1rem -2rem; /* Extend beyond main content */
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+  /* Ensure complete coverage across viewport */
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+}
+
 /* Stats Section */
 .stats-section {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1.5rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .stat-card {
@@ -221,7 +238,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
+  margin-bottom: 0;
   gap: 1rem;
   flex-wrap: wrap;
 }
@@ -284,12 +301,13 @@ body {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1.5rem;
+  margin-top: 2rem; /* Extra space after sticky header */
 }
 
 .anime-card {
   background: var(--bg-card);
   border-radius: var(--border-radius-lg);
-  overflow: hidden;
+  overflow: hidden; /* Prevent content from spilling out */
   box-shadow: var(--shadow);
   transition: var(--transition);
   position: relative;
@@ -974,7 +992,7 @@ input:checked + .slider:before {
   padding: 4px 8px;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3);
-  z-index: 3;
+  z-index: 2; /* Lower than sticky header but higher than card */
   animation: pulse-glow 2s infinite;
   max-width: calc(100% - 16px);
   text-overflow: ellipsis;
@@ -992,8 +1010,10 @@ input:checked + .slider:before {
 
 .anime-card.has-new-episode {
   border: 2px solid #ff6b35;
-  box-shadow: 0 4px 20px rgba(255, 107, 53, 0.3);
-  animation: new-episode-glow 3s infinite;
+  animation: simple-border-glow 2s infinite;
+  position: relative;
+  z-index: 1; /* Lower than sticky header */
+  overflow: hidden; /* Ensure effects stay within card bounds */
 }
 
 .new-episode-btn {
@@ -1019,12 +1039,12 @@ input:checked + .slider:before {
   }
 }
 
-@keyframes new-episode-glow {
+@keyframes simple-border-glow {
   0%, 100% {
-    box-shadow: 0 4px 20px rgba(255, 107, 53, 0.3);
+    border-color: #ff6b35;
   }
   50% {
-    box-shadow: 0 4px 30px rgba(255, 107, 53, 0.5);
+    border-color: #f7931e;
   }
 }
 
@@ -1093,6 +1113,13 @@ input:checked + .slider:before {
 
   .main-content {
     padding: 1rem;
+  }
+
+  .sticky-header {
+    padding: 0.5rem 1rem;
+    margin: -1rem -1rem 1rem -1rem;
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
   }
 
   .filter-section {
