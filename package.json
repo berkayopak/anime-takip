@@ -1,6 +1,6 @@
 {
   "name": "anime-takip-app",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "TurkAnime.co için geliştirilmiş modern anime takip uygulaması",
   "main": "main.js",
   "scripts": {
