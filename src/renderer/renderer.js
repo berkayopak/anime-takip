@@ -157,12 +157,14 @@ class AnimeApp {
       const stats = {
         total: this.animes.length,
         watching: this.animes.filter(a => a.status === 'watching').length,
+        planned: this.animes.filter(a => a.status === 'planned').length,
         completed: this.animes.filter(a => a.status === 'completed').length,
         totalWatched: this.animes.reduce((sum, a) => sum + a.currentEpisode, 0)
       };
 
       document.getElementById('totalAnimes').textContent = stats.total;
       document.getElementById('watchingAnimes').textContent = stats.watching;
+      document.getElementById('plannedAnimes').textContent = stats.planned;
       document.getElementById('completedAnimes').textContent = stats.completed;
       document.getElementById('totalEpisodes').textContent = stats.totalWatched;
     } catch (error) {
@@ -185,6 +187,14 @@ class AnimeApp {
           </div>
           <h3>Henüz tamamlanmış anime yok</h3>
           <p>Bitirdiğiniz animeler burada görünecek</p>
+        `;
+      } else if (this.currentFilter === 'planned') {
+        emptyState.innerHTML = `
+          <div class="empty-icon">
+            <i class="fas fa-calendar-plus"></i>
+          </div>
+          <h3>Henüz planlanmış anime yok</h3>
+          <p>İzlemeyi planladığınız animeler burada görünecek</p>
         `;
       } else if (this.currentFilter === 'paused') {
         emptyState.innerHTML = `
@@ -291,6 +301,7 @@ class AnimeApp {
   getStatusText(status) {
     const statusMap = {
       'watching': 'İzleniyor',
+      'planned': 'Planlandı',
       'completed': 'Tamamlandı',
       'paused': 'Durduruldu',
       'dropped': 'Bırakıldı'

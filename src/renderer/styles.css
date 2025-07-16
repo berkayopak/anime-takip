@@ -6,6 +6,7 @@
   --secondary-color: #4ecdc4;
   --accent-color: #45b7d1;
   --success-color: #96ceb4;
+  --planned-color: #a29bfe;
   --warning-color: #ffeaa7;
   --danger-color: #fd79a8;
   
@@ -330,6 +331,11 @@ body {
 
 .status-watching {
   background: var(--success-color);
+  color: white;
+}
+
+.status-planned {
+  background: var(--planned-color);
   color: white;
 }
 
