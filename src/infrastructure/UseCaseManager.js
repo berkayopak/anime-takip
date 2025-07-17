@@ -11,6 +11,7 @@ const EventBus = require('./services/EventBus');
 const ErrorHandler = require('../shared/errors/ErrorHandler');
 const NotificationPreferencesService = require('./services/NotificationPreferencesService');
 const NotificationQueue = require('./services/NotificationQueue');
+const FileManager = require('./services/FileManager');
 
 class UseCaseManager {
   constructor(mainWindow = null) {
@@ -24,6 +25,7 @@ class UseCaseManager {
     this.eventBus = null;
     this.errorHandler = null;
     this.notificationPreferencesService = null;
+    this.fileManager = null;
     
     // Use cases
     this.useCases = {};
@@ -71,6 +73,9 @@ class UseCaseManager {
     // Notification Preferences Service
     this.notificationPreferencesService = new NotificationPreferencesService();
     await this.notificationPreferencesService.loadPreferences();
+
+    // File Manager
+    this.fileManager = new FileManager();
 
     // Notification Queue
     this.notificationQueue = new NotificationQueue();
@@ -127,6 +132,7 @@ class UseCaseManager {
       notificationPreferencesService: this.notificationPreferencesService,
       eventBus: this.eventBus,
       errorHandler: this.errorHandler,
+      fileManager: this.fileManager,
 
       // Legacy methods (for gradual migration)
       checkSingleAnimeUpdate: (animeId) => this.checkSingleAnimeUpdateLegacy(animeId)

@@ -4,15 +4,16 @@
  */
 
 const path = require('path');
-const fs = require('fs');
+// fs importu kaldırıldı, dosya işlemleri FileManager üzerinden yapılacak
 
 class Config {
-    constructor() {
+    constructor(fileManager = null) {
         this.config = {};
         this.watchers = new Map();
         this.environment = process.env.NODE_ENV || 'development';
         this.configPath = this._getConfigPath();
-        
+        this.fileManager = fileManager;
+
         this._loadConfig();
         this._watchConfigFile();
     }
@@ -174,16 +175,26 @@ class Config {
         try {
             // Default config
             this.config = this._getDefaultConfig();
-            
+
             // User config dosyası varsa yükle
-            if (fs.existsSync(this.configPath)) {
-                const userConfig = JSON.parse(fs.readFileSync(this.configPath, 'utf8'));
+            let exists = false;
+            if (this.fileManager) {
+                exists = this.fileManager.exists(
+                    path.relative(this.fileManager.baseDir, this.configPath)
+                );
+            }
+            if (exists) {
+                let raw = this.fileManager.readFile(
+                    path.relative(this.fileManager.baseDir, this.configPath),
+                    'utf8'
+                );
+                const userConfig = JSON.parse(raw);
                 this.config = this._mergeDeep(this.config, userConfig);
             }
-            
+
             // Environment variables'ları yükle
             this._loadEnvironmentVariables();
-            
+
         } catch (error) {
             console.error('Config loading error:', error);
             this.config = this._getDefaultConfig();
@@ -310,13 +321,21 @@ class Config {
     _saveConfig() {
         try {
             const configDir = path.dirname(this.configPath);
-            
-            // Config dizini yoksa oluştur
-            if (!fs.existsSync(configDir)) {
-                fs.mkdirSync(configDir, { recursive: true });
+
+            // Config dizini yoksa oluştur (FileManager üzerinden)
+            if (this.fileManager) {
+                if (!this.fileManager.exists(path.relative(this.fileManager.baseDir, configDir))) {
+                    this.fileManager.mkdir(
+                        path.relative(this.fileManager.baseDir, configDir),
+                        { recursive: true }
+                    );
+                }
+                this.fileManager.writeFile(
+                    path.relative(this.fileManager.baseDir, this.configPath),
+                    JSON.stringify(this.config, null, 2),
+                    'utf8'
+                );
             }
-            
-            fs.writeFileSync(this.configPath, JSON.stringify(this.config, null, 2));
         } catch (error) {
             console.error('Config save error:', error);
         }
@@ -326,12 +345,16 @@ class Config {
      * Config dosyasını izle
      */
     _watchConfigFile() {
-        if (fs.existsSync(this.configPath)) {
-            fs.watchFile(this.configPath, (curr, prev) => {
-                if (curr.mtime !== prev.mtime) {
-                    this.reload();
+        // FileManager üzerinden izleme fonksiyonu varsa kullan
+        if (this.fileManager && typeof this.fileManager.watchFile === 'function') {
+            this.fileManager.watchFile(
+                path.relative(this.fileManager.baseDir, this.configPath),
+                (curr, prev) => {
+                    if (curr.mtime !== prev.mtime) {
+                        this.reload();
+                    }
                 }
-            });
+            );
         }
     }
 
@@ -462,7 +485,5 @@ class Config {
     }
 }
 
-// Singleton instance
-const config = new Config();
-
-module.exports = config;
+// Singleton instance (FileManager DI ile verilmelidir)
+module.exports = Config;

@@ -12,12 +12,12 @@
 - [x] Notification preferences (user ayarları, json storage, DI ile servis)
 - [x] Queue system for notifications (NotificationQueue ile async FIFO gösterim)
 #### 4.3 File & Storage Management
-- [ ] `FileManager.js` - File operations
+- [x] `FileManager.js` - File operations
 - [ ] Asset management
-- [ ] Configuration persistence
+- [x] Configuration persistence (Config.js DI & atomik yönetim)
 **Çıktılar**:
-- ✅ Temel servisler ve advanced adapter (ScrapingService, NotificationService, DesktopNotifier, NotificationPreferences, NotificationQueue) tamamlandı
-- ⏳ FileManager ve asset/config management advanced işleri eksik
+- ✅ Temel servisler ve advanced adapter (ScrapingService, NotificationService, DesktopNotifier, NotificationPreferences, NotificationQueue, FileManager, Config.js) tamamlandı
+- ⏳ Asset management advanced işleri eksik
 - ⏳ Service abstraction ve robust error handling kısmen hazır
 # Anime Takip - Refactoring Planı
 
@@ -47,7 +47,7 @@
 ✅ Foundation      : ████████████████████ 100%
 ✅ Database        : ████████████████████ 100%
 ✅ Use Cases       : ████████████████████ 100%
-⏸️ Infrastructure : ████████████████████  90%
+⏸️ Infrastructure : ████████████████████  95%
 🔴 Presentation    : ░░░░░░░░░░░░░░░░░░░░   0%
 🔴 Renderer        : ░░░░░░░░░░░░░░░░░░░░   0%
 🔴 Main Process    : ░░░░░░░░░░░░░░░░░░░░   0%
@@ -60,8 +60,8 @@
 
 ## 🔄 Son Güncelleme
 **Tarih**: 17 Temmuz 2025  
-**Güncelleme**: FAZ 4 NotificationService, DesktopNotifier, NotificationPreferences ve NotificationQueue advanced işleri tamamlandı! Bildirimler artık user preferences ve queue ile yönetiliyor. ScrapingService ve TurkAnimeAdapter da DI ile entegre edildi, kod tamamen modüler ve clean architecture uyumlu. Sıradaki adım FileManager ve asset/config management işleri, ardından FAZ 5 (Presentation Layer).  
-**Sonraki Adım**: FAZ 4 FileManager ve asset/config management advanced servisler, ardından FAZ 5 (Presentation Layer)  
+**Güncelleme**: FAZ 4 FileManager ve Config.js advanced işleri tamamlandı! Dosya ve config işlemleri artık tamamen atomik, merkezi ve DI ile yönetiliyor. Notification, preferences ve queue advanced işleri de tamamlandı. Kod modüler, test edilebilir ve clean architecture uyumlu. Sıradaki adım asset management ve FAZ 5 (Presentation Layer).
+**Sonraki Adım**: FAZ 4 asset management advanced servisler, ardından FAZ 5 (Presentation Layer)  
 **Önemli**: Kodun tamamı clean architecture ve DI uyumlu, advanced servisler için plan hazır.
 
 ## 📋 Proje Genel Bilgileri
