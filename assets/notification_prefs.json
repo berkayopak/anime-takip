@@ -1,0 +1,6 @@
+{
+  "enableNotifications": true,
+  "sound": true,
+  "onlyNewEpisodes": true,
+  "silentHours": null
+}

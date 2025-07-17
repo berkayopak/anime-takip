@@ -6,12 +6,16 @@ const path = require('path');
  * Notification Service
  * Handles all desktop notification operations
  */
+const NotificationQueue = require('./NotificationQueue');
+
 class NotificationService {
-  constructor(mainWindow = null, notifierAdapter = null) {
+  constructor(mainWindow = null, notifierAdapter = null, notificationPreferencesService = null, notificationQueue = null) {
     this.mainWindow = mainWindow;
     this.isInitialized = false;
     this.iconPath = path.join(__dirname, '../../../assets/icon.png');
     this.notifier = notifierAdapter || new DesktopNotifier();
+    this.notificationPreferencesService = notificationPreferencesService;
+    this.notificationQueue = notificationQueue || new NotificationQueue(this.notifier);
   }
 
   /**
@@ -35,16 +39,21 @@ class NotificationService {
    */
   async showNewEpisodeNotification(data) {
     try {
+      const prefs = this.notificationPreferencesService?.getPreferences?.() || {};
+      if (prefs.enableNotifications === false) return false;
       const notification = {
         title: data.title || 'New Episode Available!',
         message: data.message,
         icon: data.icon || this.iconPath,
-        sound: data.sound !== false,
+        sound: data.sound !== false && prefs.sound !== false,
         wait: data.wait || false
       };
 
-      await this.notifier.notify(notification);
-      
+      if (this.notificationQueue) {
+        this.notificationQueue.enqueue(notification);
+      } else {
+        await this.notifier.notify(notification);
+      }
       // Send IPC event to frontend if available
       if (this.mainWindow && this.mainWindow.webContents && data.animeId) {
         this.mainWindow.webContents.send('anime-updated', {
@@ -54,7 +63,6 @@ class NotificationService {
           episodeUrl: data.episodeUrl || null
         });
       }
-      
       return true;
     } catch (error) {
       console.error('Error showing new episode notification:', error);
@@ -69,6 +77,8 @@ class NotificationService {
    */
   async showUpdateCompleteNotification(data) {
     try {
+      const prefs = this.notificationPreferencesService?.getPreferences?.() || {};
+      if (prefs.enableNotifications === false) return false;
       const notification = {
         title: data.title || 'Update Check Complete',
         message: data.message,
@@ -77,8 +87,11 @@ class NotificationService {
         wait: false
       };
 
-      await this.notifier.notify(notification);
-      
+      if (this.notificationQueue) {
+        this.notificationQueue.enqueue(notification);
+      } else {
+        await this.notifier.notify(notification);
+      }
       // Send IPC event for UI refresh
       if (this.mainWindow && this.mainWindow.webContents) {
         this.mainWindow.webContents.send('updates-complete', {
@@ -86,7 +99,6 @@ class NotificationService {
           updatesFound: data.updatesFound
         });
       }
-      
       return true;
     } catch (error) {
       console.error('Error showing update complete notification:', error);
@@ -101,15 +113,21 @@ class NotificationService {
    */
   async showErrorNotification(data) {
     try {
+      const prefs = this.notificationPreferencesService?.getPreferences?.() || {};
+      if (prefs.enableNotifications === false) return false;
       const notification = {
         title: data.title || 'Error',
         message: data.message,
         icon: data.icon || this.iconPath,
-        sound: true,
+        sound: prefs.sound !== false,
         wait: false
       };
 
-      await this.notifier.notify(notification);
+      if (this.notificationQueue) {
+        this.notificationQueue.enqueue(notification);
+      } else {
+        await this.notifier.notify(notification);
+      }
       return true;
     } catch (error) {
       console.error('Error showing error notification:', error);
@@ -124,6 +142,8 @@ class NotificationService {
    */
   async showInfoNotification(data) {
     try {
+      const prefs = this.notificationPreferencesService?.getPreferences?.() || {};
+      if (prefs.enableNotifications === false) return false;
       const notification = {
         title: data.title || 'Information',
         message: data.message,
@@ -132,7 +152,11 @@ class NotificationService {
         wait: false
       };
 
-      await this.notifier.notify(notification);
+      if (this.notificationQueue) {
+        this.notificationQueue.enqueue(notification);
+      } else {
+        await this.notifier.notify(notification);
+      }
       return true;
     } catch (error) {
       console.error('Error showing info notification:', error);
@@ -147,15 +171,21 @@ class NotificationService {
    */
   async showGenericNotification(data) {
     try {
+      const prefs = this.notificationPreferencesService?.getPreferences?.() || {};
+      if (prefs.enableNotifications === false) return false;
       const notification = {
         title: data.title,
         message: data.message,
         icon: data.icon || this.iconPath,
-        sound: data.sound || false,
+        sound: (typeof data.sound !== 'undefined' ? data.sound : true) && prefs.sound !== false,
         wait: data.wait || false
       };
 
-      notifier.notify(notification);
+      if (this.notificationQueue) {
+        this.notificationQueue.enqueue(notification);
+      } else {
+        await this.notifier.notify(notification);
+      }
       return true;
     } catch (error) {
       console.error('Error showing generic notification:', error);

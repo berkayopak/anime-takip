@@ -9,6 +9,8 @@ const ScrapingService = require('./services/ScrapingService');
 const NotificationService = require('./services/NotificationService');
 const EventBus = require('./services/EventBus');
 const ErrorHandler = require('../shared/errors/ErrorHandler');
+const NotificationPreferencesService = require('./services/NotificationPreferencesService');
+const NotificationQueue = require('./services/NotificationQueue');
 
 class UseCaseManager {
   constructor(mainWindow = null) {
@@ -21,6 +23,7 @@ class UseCaseManager {
     this.notificationService = null;
     this.eventBus = null;
     this.errorHandler = null;
+    this.notificationPreferencesService = null;
     
     // Use cases
     this.useCases = {};
@@ -65,8 +68,15 @@ class UseCaseManager {
     this.scrapingService = new ScrapingService();
     await this.scrapingService.initialize();
 
+    // Notification Preferences Service
+    this.notificationPreferencesService = new NotificationPreferencesService();
+    await this.notificationPreferencesService.loadPreferences();
+
+    // Notification Queue
+    this.notificationQueue = new NotificationQueue();
+
     // Notification Service
-    this.notificationService = new NotificationService(this.mainWindow);
+    this.notificationService = new NotificationService(this.mainWindow, null, this.notificationPreferencesService, this.notificationQueue);
     await this.notificationService.initialize();
   }
 
@@ -110,13 +120,14 @@ class UseCaseManager {
       animeRepository: this.databaseManager.getAnimeRepository(),
       episodeRepository: this.databaseManager.getEpisodeRepository(),
       userSettingsRepository: this.databaseManager.getUserSettingsRepository(),
-      
+
       // Services
       scrapingService: this.scrapingService,
       notificationService: this.notificationService,
+      notificationPreferencesService: this.notificationPreferencesService,
       eventBus: this.eventBus,
       errorHandler: this.errorHandler,
-      
+
       // Legacy methods (for gradual migration)
       checkSingleAnimeUpdate: (animeId) => this.checkSingleAnimeUpdateLegacy(animeId)
     };
