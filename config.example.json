@@ -1,0 +1,67 @@
+{
+  "app": {
+    "name": "Anime Takip",
+    "version": "1.0.0",
+    "debug": false,
+    "autoStart": false,
+    "minimizeToTray": true,
+    "closeToTray": true
+  },
+  "window": {
+    "width": 1200,
+    "height": 800,
+    "minWidth": 800,
+    "minHeight": 600,
+    "center": true,
+    "resizable": true,
+    "alwaysOnTop": false
+  },
+  "database": {
+    "filename": "anime-takip.db",
+    "backupInterval": 86400000,
+    "maxBackups": 5,
+    "autoVacuum": true
+  },
+  "scraping": {
+    "interval": 3600000,
+    "timeout": 30000,
+    "retryCount": 3,
+    "retryDelay": 5000,
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "concurrent": 5
+  },
+  "notifications": {
+    "enabled": true,
+    "sound": true,
+    "newEpisodes": true,
+    "syncComplete": false,
+    "position": "top-right",
+    "duration": 5000
+  },
+  "ui": {
+    "theme": "dark",
+    "language": "tr",
+    "animations": true,
+    "compactMode": false,
+    "showProgress": true,
+    "cardsPerRow": 4
+  },
+  "development": {
+    "app": {
+      "debug": true
+    },
+    "scraping": {
+      "interval": 300000,
+      "timeout": 60000
+    }
+  },
+  "production": {
+    "app": {
+      "debug": false
+    },
+    "scraping": {
+      "interval": 3600000,
+      "timeout": 30000
+    }
+  }
+}

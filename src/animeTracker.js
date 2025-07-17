@@ -1,13 +1,10 @@
-const puppeteer = require('puppeteer');
-const Database = require('./database');
+const UseCaseManager = require('./infrastructure/UseCaseManager');
 const notifier = require('node-notifier');
 const path = require('path');
-const cheerio = require('cheerio');
 
 class AnimeTracker {
   constructor(mainWindow = null) {
-    this.db = new Database();
-    this.browser = null;
+    this.useCaseManager = new UseCaseManager(mainWindow);
     this.updateInterval = null;
     this.isChecking = false;
     this.isInitialized = false; // Track initialization status
@@ -21,12 +18,11 @@ class AnimeTracker {
 
   async initialize() {
     try {
-      await this.db.initialize();
+      await this.useCaseManager.initialize();
       await this.loadSettings();
-      await this.initializeBrowser();
       
       this.isInitialized = true; // Mark as initialized only after successful completion
-      console.log('Anime tracker initialized successfully');
+      console.log('✅ Anime tracker initialized successfully with Use Case Manager');
     } catch (error) {
       this.isInitialized = false; // Explicitly set to false on error
       console.error('Failed to initialize anime tracker:', error);
@@ -50,12 +46,11 @@ class AnimeTracker {
 
   async loadSettings() {
     try {
-      const checkInterval = await this.db.getSetting('checkInterval');
-      const notifications = await this.db.getSetting('notifications');
-      const autoRefresh = await this.db.getSetting('autoRefresh');
-      
-      
-      // Debug: Raw DB values
+      // Use UserSettingsRepository through Use Case Manager
+      const userSettingsRepo = this.useCaseManager.databaseManager.getUserSettingsRepository();
+      const checkInterval = await userSettingsRepo.getSetting('checkInterval');
+      const notifications = await userSettingsRepo.getSetting('notifications');
+      const autoRefresh = await userSettingsRepo.getSetting('autoRefresh');
       
       this.settings = {
         checkInterval: parseInt(checkInterval) || 30,
@@ -63,19 +58,19 @@ class AnimeTracker {
         autoRefresh: autoRefresh === 'true'
       };
       
-      
-      // Backend loadSettings completed
+      console.log('✅ Settings loaded successfully');
     } catch (error) {
-      console.error('Failed to load settings:', error);
+      console.error('❌ Failed to load settings:', error);
       // Use defaults if loading fails
     }
   }
 
   async saveSettings(settings) {
     try {
-      await this.db.setSetting('checkInterval', settings.checkInterval.toString());
-      await this.db.setSetting('notifications', settings.notifications.toString());
-      await this.db.setSetting('autoRefresh', settings.autoRefresh.toString());
+      const userSettingsRepo = this.dbManager.getUserSettingsRepository();
+      await userSettingsRepo.setSetting('checkInterval', settings.checkInterval.toString());
+      await userSettingsRepo.setSetting('notifications', settings.notifications.toString());
+      await userSettingsRepo.setSetting('autoRefresh', settings.autoRefresh.toString());
       
       // Update local settings
       this.settings = { ...settings };
@@ -370,65 +365,20 @@ class AnimeTracker {
 
   async addAnime(animeData) {
     try {
-      // Get anime details and image from TurkAnime anime page
-      const details = await this.getAnimeDetails(animeData.url);
+      // Use AddAnime use case
+      const addAnimeUseCase = this.useCaseManager.getUseCase('addAnime');
       
-      const anime = {
+      const result = await addAnimeUseCase.execute({
         title: animeData.title,
         url: animeData.url,
-        image: details.image, // Now fetch image from anime page
-        currentEpisode: animeData.currentEpisode || 0,
-        totalEpisodes: details.totalEpisodes || 0,
-        status: 'watching',
-        lastChecked: new Date().toISOString(),
-        dateAdded: new Date().toISOString()
-      };
-
-      const result = await this.db.addAnime(anime);
-      // Anime added
+        currentEpisode: animeData.currentEpisode || 0
+      });
       
-      // Check for new episodes immediately after adding
-      // Checking for episodes for newly added anime
-      try {
-        // Get the newly added anime ID
-        const addedAnime = await this.db.getAnimeByUrl(anime.url);
-        if (addedAnime) {
-          const updates = await this.checkSingleAnimeUpdate(addedAnime.id);
-          if (updates.length > 0) {
-            // Found episodes for newly added anime
-            
-            // Show notification if enabled
-            if (this.settings.notifications) {
-              this.showNotification(
-                'Yeni Anime Eklendi!', 
-                `${anime.title} - ${updates[0].newEpisode}. bölüm mevcut`
-              );
-            }
-            
-            // Send IPC event to frontend to refresh anime list
-            if (this.mainWindow && this.mainWindow.webContents) {
-              // Sending anime-updated event
-              this.mainWindow.webContents.send('anime-updated', {
-                type: 'new-episode',
-                animeId: addedAnime.id,
-                episodeNumber: updates[0].newEpisode,
-                episodeUrl: updates[0].episodeUrl || null
-              });
-            } else {
-              console.error('MainWindow or webContents not available for IPC event');
-            }
-          } else {
-            // No episodes found yet for anime
-          }
-        }
-      } catch (checkError) {
-        console.error('Failed to check episodes for newly added anime:', checkError);
-        // Don't throw error here, anime was successfully added
-      }
-      
+      console.log('✅ Anime added successfully using AddAnime use case');
       return result;
+      
     } catch (error) {
-      console.error('Failed to add anime:', error);
+      console.error('❌ Failed to add anime:', error);
       throw error;
     }
   }
@@ -618,7 +568,7 @@ class AnimeTracker {
     
     try {
       // Only check animes that don't have new episodes
-      const animes = await this.db.getAnimesWithoutNewEpisodes();
+      const animes = await this.dbManager.getAnimeRepository().findAnimesWithoutNewEpisodes();
       const updates = [];
       
       for (const anime of animes) {
@@ -643,7 +593,7 @@ class AnimeTracker {
             console.log(`✅ Found episode via direct URL: ${episodeResult.url}`);
             
             // Update has_new_episode flag in database
-            await this.db.updateNewEpisodeStatus(anime.id, true);
+            await this.dbManager.getAnimeRepository().updateNewEpisodeStatus(anime.id, true);
             
             updates.push({
               anime: anime,
@@ -677,7 +627,7 @@ class AnimeTracker {
               }
               
               // Update has_new_episode flag in database
-              await this.db.updateNewEpisodeStatus(anime.id, true);
+              await this.dbManager.getAnimeRepository().updateNewEpisodeStatus(anime.id, true);
               
               updates.push({
                 anime: anime,
@@ -690,7 +640,7 @@ class AnimeTracker {
           }
           
           // Update last checked time
-          await this.db.updateLastChecked(anime.id);
+          await this.dbManager.getAnimeRepository().updateLastChecked(anime.id);
           
         } catch (error) {
           console.error(`Failed to check ${anime.title}:`, error);
@@ -736,7 +686,7 @@ class AnimeTracker {
     // Checking single anime update for ID
     
     try {
-      const animes = await this.db.getAnimeList();
+      const animes = await this.dbManager.getAnimeRepository().findAll();
       const anime = animes.find(a => a.id === animeId);
       
       if (!anime) {
@@ -762,7 +712,7 @@ class AnimeTracker {
         console.log(`✅ Found episode via direct URL: ${episodeResult.url}`);
         
         // Update has_new_episode flag in database
-        await this.db.setNewEpisodeFlag(anime.id, true);
+        await this.dbManager.getAnimeRepository().setNewEpisodeFlag(anime.id, true);
         
         return [{
           anime: anime,
@@ -794,7 +744,7 @@ class AnimeTracker {
           }
           
           // Update has_new_episode flag in database
-          await this.db.setNewEpisodeFlag(anime.id, true);
+          await this.dbManager.getAnimeRepository().setNewEpisodeFlag(anime.id, true);
           
           return [{
             anime: anime,
@@ -1025,10 +975,11 @@ class AnimeTracker {
 
   async updateEpisode(animeId, episode) {
     try {
-      await this.db.updateEpisode(animeId, episode);
+      const animeRepo = this.dbManager.getAnimeRepository();
+      await animeRepo.updateEpisode(animeId, episode);
       
       // Clear new episode flag when episode is updated
-      await this.db.updateNewEpisodeStatus(animeId, false);
+      await animeRepo.updateNewEpisodeStatus(animeId, false);
       
       // Logger message removed
     } catch (error) {
@@ -1039,7 +990,7 @@ class AnimeTracker {
 
   async updateAnimeStatus(animeId, status) {
     try {
-      await this.db.updateAnimeStatus(animeId, status);
+      await this.dbManager.getAnimeRepository().updateStatus(animeId, status);
       // Logger message removed
     } catch (error) {
       console.error("Error occurred");
@@ -1049,7 +1000,7 @@ class AnimeTracker {
 
   async deleteAnime(animeId) {
     try {
-      await this.db.deleteAnime(animeId);
+      await this.dbManager.getAnimeRepository().delete(animeId);
       // Logger message removed
     } catch (error) {
       console.error("Error occurred");
@@ -1059,9 +1010,16 @@ class AnimeTracker {
 
   async getAnimeList() {
     try {
-      return await this.db.getAnimeList();
+      // Use SearchAnime use case for getting all anime
+      const searchAnimeUseCase = this.useCaseManager.getUseCase('searchAnime');
+      
+      const result = await searchAnimeUseCase.execute({
+        // Empty query returns all anime
+      });
+      
+      return result.animes || [];
     } catch (error) {
-      console.error("Error occurred");
+      console.error("❌ Error getting anime list:", error);
       return [];
     }
   }
@@ -1103,18 +1061,14 @@ class AnimeTracker {
       // AUTO-REFRESH IS NOW HANDLED BY FRONTEND
       // this.stopAutoRefresh();
       
-      if (this.browser) {
-        await this.browser.close();
-        this.browser = null;
+      // Cleanup Use Case Manager
+      if (this.useCaseManager) {
+        await this.useCaseManager.cleanup();
       }
       
-      if (this.db) {
-        await this.db.close();
-      }
-      
-      // Logger message removed
+      console.log('✅ Anime tracker cleaned up successfully');
     } catch (error) {
-      console.error("Error occurred");
+      console.error("❌ Error during cleanup:", error);
     }
   }
 
@@ -1269,7 +1223,8 @@ class AnimeTracker {
   // Get categories from database
   async getCategoriesFromDB() {
     try {
-      const categories = await this.db.getCategories();
+      const userSettingsRepo = this.dbManager.getUserSettingsRepository();
+      const categories = await userSettingsRepo.getCategories();
       
       // If no categories in database, load default ones
       if (categories.length === 0) {
@@ -1281,7 +1236,7 @@ class AnimeTracker {
           'Aile', 'Çocuk'
         ];
         
-        await this.db.saveCategories(defaultCategories);
+        await userSettingsRepo.saveCategories(defaultCategories);
         return defaultCategories;
       }
       
@@ -1303,7 +1258,7 @@ class AnimeTracker {
   async updateCategoriesFromAPI() {
     try {
       // Check if database is initialized
-      if (!this.db || !this.db.db) {
+      if (!this.dbManager || !this.dbManager.isReady()) {
         throw new Error('Database not initialized');
       }
       
@@ -1311,7 +1266,8 @@ class AnimeTracker {
       const categories = await this.getAnimeCategories();
       
       if (categories.length > 0) {
-        await this.db.saveCategories(categories);
+        const userSettingsRepo = this.dbManager.getUserSettingsRepository();
+        await userSettingsRepo.saveCategories(categories);
         // Logger message removed
         return { success: true, count: categories.length };
       } else {
