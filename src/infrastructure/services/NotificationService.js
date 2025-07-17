@@ -1,4 +1,5 @@
-const notifier = require('node-notifier');
+
+const DesktopNotifier = require('./DesktopNotifier');
 const path = require('path');
 
 /**
@@ -6,10 +7,11 @@ const path = require('path');
  * Handles all desktop notification operations
  */
 class NotificationService {
-  constructor(mainWindow = null) {
+  constructor(mainWindow = null, notifierAdapter = null) {
     this.mainWindow = mainWindow;
     this.isInitialized = false;
     this.iconPath = path.join(__dirname, '../../../assets/icon.png');
+    this.notifier = notifierAdapter || new DesktopNotifier();
   }
 
   /**
@@ -41,7 +43,7 @@ class NotificationService {
         wait: data.wait || false
       };
 
-      notifier.notify(notification);
+      await this.notifier.notify(notification);
       
       // Send IPC event to frontend if available
       if (this.mainWindow && this.mainWindow.webContents && data.animeId) {
@@ -75,7 +77,7 @@ class NotificationService {
         wait: false
       };
 
-      notifier.notify(notification);
+      await this.notifier.notify(notification);
       
       // Send IPC event for UI refresh
       if (this.mainWindow && this.mainWindow.webContents) {
@@ -107,7 +109,7 @@ class NotificationService {
         wait: false
       };
 
-      notifier.notify(notification);
+      await this.notifier.notify(notification);
       return true;
     } catch (error) {
       console.error('Error showing error notification:', error);
@@ -130,7 +132,7 @@ class NotificationService {
         wait: false
       };
 
-      notifier.notify(notification);
+      await this.notifier.notify(notification);
       return true;
     } catch (error) {
       console.error('Error showing info notification:', error);

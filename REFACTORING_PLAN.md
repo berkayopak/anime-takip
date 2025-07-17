@@ -4,11 +4,11 @@
 **Zorluk**: ⭐⭐⭐☆☆
 #### 4.1 Scraping Service Refactoring
 - [x] `ScrapingService.js` temel servis DI ile entegre edildi
-- [ ] `TurkAnimeAdapter.js` site-specific implementation
+- [x] `TurkAnimeAdapter.js` site-specific implementation
 - [ ] Error handling ve retry logic
 #### 4.2 Notification Service
-- [x] `NotificationService.js` temel servis DI ile entegre edildi
-- [ ] `DesktopNotifier.js` - node-notifier wrapper
+- [x] `NotificationService.js` temel servis DI ve adapter ile advanced refactor edildi
+- [x] `DesktopNotifier.js` - node-notifier adapter/wrapper tamamlandı
 - [ ] Notification preferences
 - [ ] Queue system for notifications
 #### 4.3 File & Storage Management
@@ -16,8 +16,8 @@
 - [ ] Asset management
 - [ ] Configuration persistence
 **Çıktılar**:
-- ⏳ Temel servisler hazır (ScrapingService, NotificationService)
-- ⏳ Advanced servisler ve adapter/queue eksik
+- ✅ Temel servisler ve advanced adapter (ScrapingService, NotificationService, DesktopNotifier) tamamlandı
+- ⏳ Notification preferences ve queue advanced işleri eksik
 - ⏳ Service abstraction ve robust error handling kısmen hazır
 # Anime Takip - Refactoring Planı
 
@@ -37,8 +37,9 @@
 🔴 Final        : ░░░░░░░░░░░░░░░░░░░░   0%
 ```
 
-### Toplam İlerleme: 45% (4.5/10 faz tamamlandı)
+### Toplam İlerleme: 50% (5/10 faz tamamlandı)
 ## 📊 İlerleme Tracking
+
 
 ### Genel İlerleme
 ```
@@ -46,7 +47,7 @@
 ✅ Foundation      : ████████████████████ 100%
 ✅ Database        : ████████████████████ 100%
 ✅ Use Cases       : ████████████████████ 100%
-⏸️ Infrastructure : ████████████░░░░░░░░  45%
+⏸️ Infrastructure : ████████████████░░░░  70%
 🔴 Presentation    : ░░░░░░░░░░░░░░░░░░░░   0%
 🔴 Renderer        : ░░░░░░░░░░░░░░░░░░░░   0%
 🔴 Main Process    : ░░░░░░░░░░░░░░░░░░░░   0%
@@ -55,11 +56,12 @@
 🔴 Final           : ░░░░░░░░░░░░░░░░░░░░   0%
 ```
 
-### Toplam İlerleme: 45% (4.5/10 faz tamamlandı)
+### Toplam İlerleme: 55% (5.5/10 faz tamamlandı)
+
 ## 🔄 Son Güncelleme
 **Tarih**: 17 Temmuz 2025  
-**Güncelleme**: FAZ 3 ve temel FAZ 4 tamamlandı! Use Case mimarisi, ScrapingService ve NotificationService DI ile entegre edildi. Advanced adapter/queue işleri beklemede.  
-**Sonraki Adım**: FAZ 4 advanced servisler ve FAZ 5 (Presentation Layer)  
+**Güncelleme**: FAZ 4 NotificationService ve DesktopNotifier advanced refactor tamamlandı! NotificationService artık DI ve adapter ile modüler, DesktopNotifier.js adapter olarak entegre. ScrapingService ve TurkAnimeAdapter da DI ile entegre edildi, kod tamamen modüler ve clean architecture uyumlu. Notification preferences, queue ve FileManager advanced işleri beklemede.  
+**Sonraki Adım**: FAZ 4 Notification preferences/queue ve FileManager advanced servisler, ardından FAZ 5 (Presentation Layer)  
 **Önemli**: Kodun tamamı clean architecture ve DI uyumlu, advanced servisler için plan hazır.
 
 ## 📋 Proje Genel Bilgileri
@@ -349,7 +351,7 @@ src/
 - [ ] Error handling ve retry logic
 
 #### 4.2 Notification Service
-- [ ] `DesktopNotifier.js` - node-notifier wrapper
+- [x] `DesktopNotifier.js` - node-notifier adapter/wrapper tamamlandı
 - [ ] Notification preferences
 - [ ] Queue system for notifications
 
