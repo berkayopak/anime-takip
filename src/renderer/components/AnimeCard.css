@@ -1,0 +1,225 @@
+/* AnimeCard Component Styles */
+
+.anime-card {
+  background: var(--bg-card);
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+  position: relative;
+}
+
+.anime-card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-lg);
+}
+
+.anime-image {
+  width: 100%;
+  height: 200px;
+  background: var(--bg-tertiary);
+  position: relative;
+  overflow: hidden;
+}
+
+.anime-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: var(--transition);
+}
+
+.anime-card:hover .anime-image img {
+  transform: scale(1.1);
+}
+
+.anime-status {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.status-watching {
+  background: var(--success-color);
+  color: white;
+}
+
+.status-planned {
+  background: var(--planned-color);
+  color: white;
+}
+
+.status-completed {
+  background: var(--accent-color);
+  color: white;
+}
+
+.status-paused {
+  background: var(--warning-color);
+  color: #333;
+}
+
+.status-dropped {
+  background: var(--danger-color);
+  color: white;
+}
+
+.anime-info {
+  padding: 1.5rem;
+}
+
+.anime-title {
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.anime-progress {
+  margin: 1rem 0;
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--bg-tertiary);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+  transition: var(--transition);
+}
+
+.anime-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.anime-actions .new-episode-btn {
+  width: 100%;
+  margin: 0;
+  order: -1;
+}
+
+.anime-actions .regular-actions {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+}
+
+.anime-actions .regular-actions .btn {
+  flex: 1;
+  margin: 0;
+  padding: 6px 8px;
+  font-size: 11px;
+  white-space: nowrap;
+  text-align: center;
+  min-width: 0;
+}
+
+.anime-actions .regular-actions .btn i {
+  margin-right: 3px;
+}
+
+.anime-actions .btn {
+  margin: 2px;
+  padding: 6px 12px;
+  font-size: 12px;
+  white-space: nowrap;
+  min-width: 70px;
+}
+
+.anime-actions .btn i {
+  margin-right: 4px;
+}
+
+/* New Episode Styles */
+.new-episode-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: linear-gradient(135deg, #ff6b35, #f7931e);
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3);
+  z-index: 2;
+  animation: pulse-glow 2s infinite;
+  max-width: calc(100% - 16px);
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.anime-card.has-new-episode {
+  border: 2px solid #ff6b35;
+  animation: simple-border-glow 2s infinite;
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.new-episode-btn {
+  background: linear-gradient(135deg, #28a745, #20c997) !important;
+  border: none !important;
+  margin-bottom: 5px;
+  width: 100%;
+  animation: pulse-button 2s infinite;
+}
+
+.new-episode-btn:hover {
+  background: linear-gradient(135deg, #20c997, #28a745) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3);
+  }
+  50% {
+    box-shadow: 0 2px 16px rgba(255, 107, 53, 0.6);
+  }
+}
+
+@keyframes simple-border-glow {
+  0%, 100% {
+    border-color: #ff6b35;
+  }
+  50% {
+    border-color: #f7931e;
+  }
+}
+
+@keyframes pulse-button {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}

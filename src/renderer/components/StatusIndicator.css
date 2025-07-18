@@ -1,0 +1,41 @@
+/* Status Indicator Component Styles */
+
+.status-indicator {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 12px 16px;
+  box-shadow: var(--shadow);
+  z-index: 1500;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(20px);
+  transition: all 0.3s ease;
+  max-width: 300px;
+}
+
+.status-indicator.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.status-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-icon {
+  color: var(--primary-color);
+  font-size: 14px;
+}
+
+.status-text {
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+}

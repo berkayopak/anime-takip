@@ -1,5 +1,5 @@
 // Modal Component
-// ...modal dialog UI will be implemented here...
+import '../../renderer/components/Modal.css';
 import PropTypes from 'prop-types';
 
 export default function Modal({ isOpen, content, onClose, error = null }) {

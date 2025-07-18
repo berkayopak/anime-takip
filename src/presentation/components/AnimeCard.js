@@ -1,6 +1,7 @@
 // AnimeCard Component
 // ...anime-themed card UI will be implemented here...
 import PropTypes from 'prop-types';
+import '../../renderer/components/AnimeCard.css';
 
 export default function AnimeCard({ anime, onSelect, loading = false, error = null }) {
   if (loading) {
